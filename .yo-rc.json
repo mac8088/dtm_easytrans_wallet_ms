@@ -1,0 +1,42 @@
+{
+  "generator-jhipster": {
+    "promptValues": {
+      "packageName": "net.atos.demo",
+      "nativeLanguage": "en"
+    },
+    "jhipsterVersion": "6.4.1",
+    "applicationType": "microservice",
+    "baseName": "wallet",
+    "packageName": "net.atos.demo",
+    "packageFolder": "net/atos/demo",
+    "serverPort": "8082",
+    "authenticationType": "jwt",
+    "cacheProvider": "ehcache",
+    "enableHibernateCache": true,
+    "websocket": false,
+    "databaseType": "sql",
+    "devDatabaseType": "h2Disk",
+    "prodDatabaseType": "postgresql",
+    "searchEngine": false,
+    "messageBroker": false,
+    "serviceDiscoveryType": "eureka",
+    "buildTool": "maven",
+    "enableSwaggerCodegen": false,
+    "jwtSecretKey": "OGZlMjFiMjg1ZmJiM2I3NDI2NzczZWQ2ZTdkNjI5NzllMTQ1Y2E4MDdiN2I2ZTNhYzJkZTk5NDY4M2RlY2ZlNTk1MmUxNWQ3Y2M2OWVjMzc2ZjM3Y2JhYzZjYWE0N2ZiYTBjNDQ1OTRiM2FmZjgwZjM4Y2I2MDIyZGYzZDUxYWI=",
+    "embeddableLaunchScript": false,
+    "testFrameworks": [],
+    "jhiPrefix": "jhi",
+    "entitySuffix": "",
+    "dtoSuffix": "DTO",
+    "otherModules": [],
+    "enableTranslation": true,
+    "clientPackageManager": "npm",
+    "nativeLanguage": "en",
+    "languages": [
+      "en"
+    ],
+    "blueprints": [],
+    "skipClient": true,
+    "skipUserManagement": true
+  }
+}

@@ -1,0 +1,11 @@
+version: '2'
+services:
+  wallet-postgresql:
+    image: postgres:11.5
+    # volumes:
+    #     - ~/volumes/jhipster/wallet/postgresql/:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=wallet
+      - POSTGRES_PASSWORD=
+    ports:
+      - 5432:5432
