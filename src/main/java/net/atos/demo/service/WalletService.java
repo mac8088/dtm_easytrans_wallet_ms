@@ -113,7 +113,7 @@ public class WalletService {
 			throw new RuntimeException("thrown exception with the failed confirmPay, not match!");
 		}
 		
-		if(param.getPayAmount()==200 && (new java.util.Random().nextBoolean())) {
+		if(param.getPayAmount()>=200 && (new java.util.Random().nextBoolean())) {
 			throw new RuntimeException("thrown exception with the failed confirmPay, over 200!");
 		}
 		
