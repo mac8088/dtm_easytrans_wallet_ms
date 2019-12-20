@@ -22,7 +22,7 @@ public class Wallet implements Serializable {
     @Id
     @NotNull
     @Column(name = "user_id", nullable = false)
-    private Integer userId;
+    private Long userId;
 
     @NotNull
     @Column(name = "total_amount", nullable = false)
@@ -34,16 +34,16 @@ public class Wallet implements Serializable {
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
-    public Integer getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public Wallet userId(Integer userId) {
+    public Wallet userId(Long userId) {
         this.userId = userId;
         return this;
     }
 
-    public void setUserId(Integer userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 

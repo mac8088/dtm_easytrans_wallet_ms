@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,9 +35,6 @@ public class WalletService {
     
 	@Resource
 	private EasyTransFacade transaction;
-
-	@Resource
-	private JdbcTemplate jdbcTemplate;
 
     public WalletService(WalletRepository walletRepository) {
         this.walletRepository = walletRepository;
@@ -95,14 +91,35 @@ public class WalletService {
 	@EtTcc(confirmMethod = "doConfirmPay", cancelMethod = "doCancelPay", idempotentType = BusinessProvider.IDENPOTENT_TYPE_FRAMEWORK, cfgClass = WalletPayRequestCfg.class)
 	public WalletPayResponseVO doTryPay(WalletPayRequestVO param) {
 		log.warn("exec doTryPay start...");
-		int update = jdbcTemplate.update(
-				"update biz_wallet set freeze_amount = freeze_amount + ? where user_id = ? and (total_amount - freeze_amount) >= ?;",
-				param.getPayAmount(), param.getUserId(), param.getPayAmount());
+		
+		try {
+			final Long userId = param.getUserId();
+			log.warn("find wallet base on user: {} " + userId);
+			
+			//find wallet
+			Optional<Wallet> opt = findOne(userId);
+			if(!opt.isPresent()) {
+				throw new Exception("without given user!"); 
+			}
+			
+			Wallet wallet = opt.get();
+			log.warn("found wallet : {} " + wallet);
 
-		if (update != 1) {
-			throw new RuntimeException("can not find specific user id or have not enought money");
+			//validation
+			long oldTotalVal = wallet.getTotalAmount();
+			long oldFreeezeVal = wallet.getFreezeAmount();			
+			if (oldTotalVal - oldFreeezeVal < param.getPayAmount()) {
+				throw new Exception("without enough money!"); 
+			}
+			wallet.setFreezeAmount(oldFreeezeVal + param.getPayAmount());
+			
+			//update wallet
+			save(wallet);	
+			
+		} catch(Exception ex) {
+			throw new RuntimeException("can not find specific user id or have not enought money", ex);
 		}
-
+		
 		WalletPayResponseVO walletPayTccMethodResult = new WalletPayResponseVO();
 		walletPayTccMethodResult.setFreezeAmount(param.getPayAmount());
 		log.warn("exec doTryPay end...");
@@ -112,16 +129,37 @@ public class WalletService {
 	@Transactional
 	public void doConfirmPay(WalletPayRequestVO param) {
 		log.warn("exec doConfirmPay start...");
-		int update = jdbcTemplate.update(
-				"update biz_wallet set freeze_amount = freeze_amount - ?, total_amount = total_amount - ? where user_id = ?;",
-				param.getPayAmount(), param.getPayAmount(), param.getUserId());
-
-		if (update != 1) {
-			throw new RuntimeException("thrown exception with the failed confirmPay, not match!");
+		
+		try {
+			final Long userId = param.getUserId();
+			log.warn("find wallet base on user: {} " + userId);
+			
+			//find wallet
+			Optional<Wallet> opt = findOne(userId);
+			if(!opt.isPresent()) {
+				throw new Exception("without given user!"); 
+			}
+			
+			Wallet wallet = opt.get();
+			log.warn("found wallet : {} " + wallet);
+			
+			long oldFreeezeVal = wallet.getFreezeAmount();
+			wallet.setFreezeAmount(oldFreeezeVal - param.getPayAmount());
+			log.warn("previous freeze_amount : {} new freeze_amount " + oldFreeezeVal, wallet.getFreezeAmount());
+			
+			long oldTotalValue = wallet.getTotalAmount();
+			wallet.setTotalAmount(oldTotalValue - param.getPayAmount());
+			log.warn("previous total_amount : {} new total_amount " + oldFreeezeVal, wallet.getFreezeAmount());
+			
+			//update wallet
+			save(wallet);	
+			
+		}catch(Exception ex) {
+			throw new RuntimeException("thrown exception with the failed confirmPay, not match!", ex);
 		}
-
+		
 		if (param.getPayAmount() >= 200 && (new java.util.Random().nextBoolean())) {
-			throw new RuntimeException("thrown exception with the failed confirmPay, over 200!");
+			throw new RuntimeException("thrown exception with the failed confirmPay,  random check over 200!");
 		}
 
 		log.warn("exec doConfirmPay end...");
@@ -130,12 +168,29 @@ public class WalletService {
 	@Transactional
 	public void doCancelPay(WalletPayRequestVO param) {
 		log.warn("exec doCancelPay start...");
-		int update = jdbcTemplate.update("update biz_wallet set freeze_amount = freeze_amount - ? where user_id = ?;",
-				param.getPayAmount(), param.getUserId());
+		try {
+			final Long userId = param.getUserId();
+			log.warn("find wallet base on user: {} " + userId);
+			
+			//find wallet
+			Optional<Wallet> opt = findOne(userId);
+			if(!opt.isPresent()) {
+				throw new Exception("without given user!"); 
+			}
+			
+			Wallet wallet = opt.get();
+			log.warn("found wallet : {} " + wallet);
 
-		if (update != 1) {
-			throw new RuntimeException("thrown exception with the failed cancelPay!");
+			long oldVal = wallet.getFreezeAmount();
+			wallet.setFreezeAmount(oldVal - param.getPayAmount());
+			log.warn("previous freeze_amount : {} new freeze_amount " + oldVal, wallet.getFreezeAmount());
+			
+			//update wallet
+			save(wallet);			
+		}catch(Exception ex) {
+			throw new RuntimeException("thrown exception with the failed cancelPay!", ex);
 		}
+
 		log.warn("exec doCancelPay end...");
 	}
 }

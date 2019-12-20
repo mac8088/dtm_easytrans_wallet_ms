@@ -88,7 +88,7 @@
             Added the Demo Entity.
         -->
         <createTable tableName="biz_wallet" remarks="钱包">
-            <column name="user_id" type="integer" remarks="用户标识">
+            <column name="user_id" type="bigint" remarks="用户标识">
                 <constraints primaryKey="true"  nullable="false" />
             </column>
             <column name="total_amount" type="bigint" remarks="账号金额">
