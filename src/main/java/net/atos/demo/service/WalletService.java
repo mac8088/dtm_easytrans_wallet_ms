@@ -1,10 +1,11 @@
 package net.atos.demo.service;
 
-import net.atos.demo.domain.Wallet;
-import net.atos.demo.repository.WalletRepository;
+import java.util.Optional;
+
+import javax.annotation.Resource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -12,11 +13,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yiqiniu.easytrans.core.EasyTransFacade;
-import com.yiqiniu.easytrans.demos.wallet.api.vo.WalletPayVO.*;
+import com.yiqiniu.easytrans.protocol.BusinessProvider;
+import com.yiqiniu.easytrans.protocol.tcc.EtTcc;
 
-import java.util.Optional;
+import com.yiqiniu.easytrans.demos.wallet.api.WalletPayMoneyService.WalletPayRequestVO;
+import com.yiqiniu.easytrans.demos.wallet.api.WalletPayMoneyService.WalletPayResponseVO;
+import com.yiqiniu.easytrans.demos.wallet.api.requestcfg.WalletPayRequestCfg;
 
-import javax.annotation.Resource;
+import net.atos.demo.domain.Wallet;
+import net.atos.demo.repository.WalletRepository;
 
 /**
  * Service Implementation for managing {@link Wallet}.
@@ -85,17 +90,19 @@ public class WalletService {
         walletRepository.deleteById(id);
     }
     
+	// 如果doTryPay的入参为集成了EasyTransRequest并带有BusinessIdentiffer的话则无需指定cfgClass
 	@Transactional
+	@EtTcc(confirmMethod = "doConfirmPay", cancelMethod = "doCancelPay", idempotentType = BusinessProvider.IDENPOTENT_TYPE_FRAMEWORK, cfgClass = WalletPayRequestCfg.class)
 	public WalletPayResponseVO doTryPay(WalletPayRequestVO param) {
 		log.warn("exec doTryPay start...");
 		int update = jdbcTemplate.update(
-				"update biz_wallet set freeze_amount = freeze_amount + ? where user_id = ? and (total_amount - freeze_amount) >= ?;", 
+				"update biz_wallet set freeze_amount = freeze_amount + ? where user_id = ? and (total_amount - freeze_amount) >= ?;",
 				param.getPayAmount(), param.getUserId(), param.getPayAmount());
-		
-		if(update != 1){
+
+		if (update != 1) {
 			throw new RuntimeException("can not find specific user id or have not enought money");
 		}
-		
+
 		WalletPayResponseVO walletPayTccMethodResult = new WalletPayResponseVO();
 		walletPayTccMethodResult.setFreezeAmount(param.getPayAmount());
 		log.warn("exec doTryPay end...");
@@ -106,28 +113,27 @@ public class WalletService {
 	public void doConfirmPay(WalletPayRequestVO param) {
 		log.warn("exec doConfirmPay start...");
 		int update = jdbcTemplate.update(
-				"update biz_wallet set freeze_amount = freeze_amount - ?, total_amount = total_amount - ? where user_id = ?;", 
+				"update biz_wallet set freeze_amount = freeze_amount - ?, total_amount = total_amount - ? where user_id = ?;",
 				param.getPayAmount(), param.getPayAmount(), param.getUserId());
-		
-		if(update != 1){
+
+		if (update != 1) {
 			throw new RuntimeException("thrown exception with the failed confirmPay, not match!");
 		}
-		
-		if(param.getPayAmount()>=200 && (new java.util.Random().nextBoolean())) {
+
+		if (param.getPayAmount() >= 200 && (new java.util.Random().nextBoolean())) {
 			throw new RuntimeException("thrown exception with the failed confirmPay, over 200!");
 		}
-		
+
 		log.warn("exec doConfirmPay end...");
 	}
-	
+
 	@Transactional
 	public void doCancelPay(WalletPayRequestVO param) {
 		log.warn("exec doCancelPay start...");
-		int update = jdbcTemplate.update(
-				"update biz_wallet set freeze_amount = freeze_amount - ? where user_id = ?;", 
-				param.getPayAmount(),param.getUserId());
-		
-		if(update != 1){
+		int update = jdbcTemplate.update("update biz_wallet set freeze_amount = freeze_amount - ? where user_id = ?;",
+				param.getPayAmount(), param.getUserId());
+
+		if (update != 1) {
 			throw new RuntimeException("thrown exception with the failed cancelPay!");
 		}
 		log.warn("exec doCancelPay end...");
