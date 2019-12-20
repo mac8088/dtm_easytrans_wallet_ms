@@ -1,9 +1,9 @@
 package net.atos.demo;
 
-import net.atos.demo.config.ApplicationProperties;
-import net.atos.demo.config.DefaultProfileUtil;
-
-import io.github.jhipster.config.JHipsterConstants;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.Collection;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -17,13 +17,14 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.core.env.Environment;
 
 import com.yiqiniu.easytrans.EnableEasyTransaction;
+import com.yiqiniu.easytrans.extensionsuite.impl.database.EnableExtensionSuiteDatabaseImpl;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.Collection;
+import io.github.jhipster.config.JHipsterConstants;
+import net.atos.demo.config.ApplicationProperties;
+import net.atos.demo.config.DefaultProfileUtil;
 
 @SpringBootApplication
+@EnableExtensionSuiteDatabaseImpl
 @EnableEasyTransaction
 @EnableConfigurationProperties({LiquibaseProperties.class, ApplicationProperties.class})
 @EnableDiscoveryClient
